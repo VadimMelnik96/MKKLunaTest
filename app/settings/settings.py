@@ -1,8 +1,9 @@
+import os
 from functools import lru_cache
 from typing import Self, Sequence
 
 from dotenv import load_dotenv
-from pydantic import model_validator, PostgresDsn
+from pydantic import model_validator, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -20,9 +21,11 @@ class AppSettings(EnvBaseSettings):
     mode: str = "DEV"
     host: str
     port: int
-    access_key: str
+    title: str
+    version: str
     debug: bool = True
     root_path: str = ""
+    static_api_key: str = "very_secret_key"
     model_config = SettingsConfigDict(env_prefix="app_")
 
 
@@ -67,6 +70,29 @@ class PostgresSettings(EnvBaseSettings):
     model_config = SettingsConfigDict(env_prefix="postgres_")
 
 
+
+class ScalingSettings(EnvBaseSettings):
+    """Автовычисление ресурсов"""
+
+    backend_workers: int | None = None
+    max_db_connections: int = 100
+
+    @computed_field
+    def effective_backend_workers(self) -> int:
+        return self.backend_workers or (os.cpu_count() or 1)
+
+    @computed_field
+    def db_pool_size(self) -> int:
+        per_worker = self.max_db_connections // self.effective_backend_workers
+        return max(1, int(per_worker * 0.8))
+
+    @computed_field
+    def db_max_overflow(self) -> int:
+        per_worker = self.max_db_connections // self.effective_backend_workers
+        return max(0, per_worker - self.db_pool_size)
+
+    model_config = SettingsConfigDict(env_prefix="scale_")
+
 class WebhookSettings(EnvBaseSettings):
     """Настройки для адаптера webhook"""
     max_attempts: int = 3
@@ -74,9 +100,6 @@ class WebhookSettings(EnvBaseSettings):
     timeout: float = 10.0
 
     model_config = SettingsConfigDict(env_prefix="webhook_")
-
-class XAPIKeySettings(EnvBaseSettings):
-    api_key: str
 
 
 class RabbitSettings(EnvBaseSettings):
@@ -93,12 +116,14 @@ class RabbitSettings(EnvBaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="rabbit_")
 
+
 class Settings(EnvBaseSettings):
     """Настройки приложения"""
     app: AppSettings = AppSettings()
     database: PostgresSettings = PostgresSettings()
     rabbit: RabbitSettings = RabbitSettings()
     webhook: WebhookSettings = WebhookSettings()
+    scaling: ScalingSettings = ScalingSettings()
 
 
 @lru_cache
