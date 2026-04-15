@@ -70,7 +70,6 @@ class PostgresSettings(EnvBaseSettings):
     model_config = SettingsConfigDict(env_prefix="postgres_")
 
 
-
 class ScalingSettings(EnvBaseSettings):
     """Автовычисление ресурсов"""
 
@@ -93,6 +92,7 @@ class ScalingSettings(EnvBaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="scale_")
 
+
 class WebhookSettings(EnvBaseSettings):
     """Настройки для адаптера webhook"""
     max_attempts: int = 3
@@ -100,6 +100,16 @@ class WebhookSettings(EnvBaseSettings):
     timeout: float = 10.0
 
     model_config = SettingsConfigDict(env_prefix="webhook_")
+
+
+class OutboxSettings(EnvBaseSettings):
+    """Настройки outbox"""
+
+    max_attempts: int = 3
+    exchange: str = 'payments'
+    frequency: int = 1
+
+    model_config = SettingsConfigDict(env_prefix="outbox_")
 
 
 class RabbitSettings(EnvBaseSettings):
@@ -124,6 +134,7 @@ class Settings(EnvBaseSettings):
     rabbit: RabbitSettings = RabbitSettings()
     webhook: WebhookSettings = WebhookSettings()
     scaling: ScalingSettings = ScalingSettings()
+    outbox: OutboxSettings = OutboxSettings()
 
 
 @lru_cache

@@ -9,7 +9,7 @@ class IWebhookAdapter(abc.ABC):
     """Интерфейс адаптера вебхука"""
 
     @abc.abstractmethod
-    async def send(self, url: str, payload: dict) -> None:
+    async def send(self, url: str, payload: dict) -> bool:
        """Метод отправки информации на вебхук"""
 
 

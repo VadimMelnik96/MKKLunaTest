@@ -12,10 +12,15 @@ class CreateOutboxDTO(ArbitraryModel):
     payload: dict
     attempts: int
     published_at: datetime | None = None
-    is_dead: bool = False
-
 
 class OutboxDTO(CreateOutboxDTO):
     """Аутбокс ДТО"""
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+
+class UpdateOutboxDTO(ArbitraryModel):
+    """ДТО обновления"""
+    attempts: int | None = None
+    published_at: datetime | None = None
+    is_dead: bool = False

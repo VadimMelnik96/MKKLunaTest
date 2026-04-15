@@ -5,7 +5,7 @@ from sqlalchemy import Integer, String, Boolean
 from sqlalchemy.orm import mapped_column, Mapped
 
 from app.infrastructure.models.base import Base
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, JSON
+from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, JSONB
 
 
 class OutboxMessage(Base):
@@ -16,9 +16,8 @@ class OutboxMessage(Base):
     )
     aggregate_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     published_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
-    is_dead: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

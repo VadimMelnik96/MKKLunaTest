@@ -24,3 +24,20 @@ class PaymentDTO(CreatePaymentDTO):
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+
+class UpdatePaymentDTO(ArbitraryModel):
+    """Обновление UpdatePaymentDTO"""
+
+    status: PaymentStatus | None = None
+    processed_at: datetime | None = None
+
+class PaymentPayload(ArbitraryModel):
+    """DTO консъюмера"""
+
+    payment_id: uuid.UUID
+    amount: float
+    currency: CurrencyEnum
+    description: str | None = None
+    webhook_url: str
+    retry_count: int = 0

@@ -34,21 +34,22 @@ class PaymentService(IPaymentService):
                     webhook_url=payment.webhook_url,
                     idempotency_key=idempotency_key,
                     amount=payment.amount,
+                    description=payment.description,
                     currency=payment.currency,
                     payment_metadata=payment.payment_metadata,
                     status=PaymentStatus.PENDING,
                 )
                 outbox = CreateOutboxDTO(
                     id=uuid.uuid4(),
-                    event_type="payment.new",
+                    event_type="payments.new",
                     aggregate_id=new_payment.id,
                     payload={
-                    "payment_id": str(new_payment.id),
-                    "amount": str(payment.amount),
-                    "currency": payment.currency,
-                    "description": payment.description,
-                    "webhook_url": payment.webhook_url,
-                },
+                        "payment_id": str(new_payment.id),
+                        "amount": str(payment.amount),
+                        "currency": payment.currency,
+                        "description": payment.description,
+                        "webhook_url": payment.webhook_url,
+                    },
                     attempts=0
                 )
                 payment = await self.uow.payments.create(new_payment)

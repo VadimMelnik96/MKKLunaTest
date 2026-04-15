@@ -21,7 +21,8 @@ async def creat_payment(
 ) -> PaymentCreatedResponse:
     """Создание платежа"""
     payment = await service.create_payment(body, idempotency_key)
-    return PaymentCreatedResponse.model_validate(payment)
+    return PaymentCreatedResponse.model_validate(payment.model_dump())
+
 
 @router.get("/{payment_id}", status_code=200)
 @inject

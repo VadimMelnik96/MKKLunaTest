@@ -1,0 +1,99 @@
+networks:
+  mkkluna_net:
+    driver: bridge
+
+
+services:
+
+  builder:
+    image: mkkluna
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: echo "Image built"
+    networks:
+       - mkkluna_net
+
+  app:
+    image: mkkluna
+    pull_policy: never
+    container_name: mkkluna_api
+    env_file: .env
+    command: sh -c "alembic upgrade head && uvicorn app.main:app"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - builder
+      - db
+      - rabbit
+    networks:
+      - mkkluna_net
+
+  outbox_scheduler:
+    image: mkkluna
+    pull_policy: never
+    container_name: mkluna_outbox
+    env_file: .env
+    command: python -m app.outbox_scheduler
+    depends_on:
+      - builder
+      - db
+      - rabbit
+    networks:
+      - mkkluna_net
+
+  db:
+    container_name: mkkluna_postgres
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - mkkluna_net
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+
+  consumer:
+    image: mkkluna
+    pull_policy: never
+    container_name: mkkluna_consumer
+    env_file: .env
+    # Запуск faststream консьюмера
+    command: faststream run app.consumer.consumer:app
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbit:
+        condition: service_healthy
+    networks:
+      - mkkluna_net
+
+  rabbit:
+    image: rabbitmq:4.0-management
+    container_name: mkkluna_rabbit
+    ports:
+      - "5672:5672"   # Порт для AMQP
+      - "15672:15672" # Порт для Management UI (логин/пароль: guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - mkkluna_net
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
