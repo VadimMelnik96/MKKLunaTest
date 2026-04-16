@@ -1,15 +1,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Integer, String, Boolean
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy import Index, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.models.base import Base
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, JSONB
 
 
 class OutboxMessage(Base):
     __tablename__ = 'outbox_messages'
+
+
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -20,4 +22,17 @@ class OutboxMessage(Base):
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     published_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_outbox_pending_only",
+            "id",
+            "created_at",
+            postgresql_where=(published_at.is_(None)),
+        ),
+        Index("ix_outbox_event_type", "event_type"),
+        Index("ix_outbox_attempts", "attempts"),
+        Index("idx_outbox_aggregate_id", "aggregate_id"),
+
     )

@@ -7,8 +7,12 @@ class Database:
     """Вспомогательный класс для работы с БД"""
 
     def __init__(self, config: PostgresSettings, settings: Settings):
-        self.engine = create_async_engine(url=str(config.dsn), echo=config.echo,  pool_size=settings.scaling.db_pool_size,
-            max_overflow=settings.scaling.db_max_overflow)
+        self.engine = create_async_engine(
+            url=str(config.dsn),
+            echo=config.echo,
+            pool_size=settings.scaling.db_pool_size,
+            max_overflow=settings.scaling.db_max_overflow
+        )
 
         self.session_factory = async_sessionmaker(
             bind=self.engine,

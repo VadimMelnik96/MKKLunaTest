@@ -1,5 +1,5 @@
-from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue, ExchangeType
-
+import aio_pika
+from faststream.rabbit import ExchangeType, RabbitBroker, RabbitExchange, RabbitQueue
 
 payments_exchange = RabbitExchange(
     "payments",
@@ -66,13 +66,19 @@ dlq_queue = RabbitQueue(
 
 
 async def declare_queues(broker: RabbitBroker) -> None:
-    """Объявление очередей"""
-    await broker.declare_exchange(payments_exchange)
-    await broker.declare_exchange(dlx_exchange)
-    await broker.declare_exchange(retry_exchange_1)
-    await broker.declare_exchange(retry_exchange_2)
+    """Объявление и связывание через нативный aio_pika"""
+    q_main: aio_pika.RobustQueue = await broker.declare_queue(payments_queue)
+    ex_main: aio_pika.RobustExchange = await broker.declare_exchange(payments_exchange)
+    await q_main.bind(ex_main, routing_key="payments.new")
 
-    await broker.declare_queue(payments_queue)
-    await broker.declare_queue(retry_queue_1)
-    await broker.declare_queue(retry_queue_2)
-    await broker.declare_queue(dlq_queue)
+    q_retry1: aio_pika.RobustQueue = await broker.declare_queue(retry_queue_1)
+    ex_retry1: aio_pika.RobustExchange = await broker.declare_exchange(retry_exchange_1)
+    await q_retry1.bind(ex_retry1, routing_key="payments.retry.1")
+
+    q_retry2: aio_pika.RobustQueue = await broker.declare_queue(retry_queue_2)
+    ex_retry2: aio_pika.RobustExchange = await broker.declare_exchange(retry_exchange_2)
+    await q_retry2.bind(ex_retry2, routing_key="payments.retry.2")
+
+    q_dead: aio_pika.RobustQueue = await broker.declare_queue(dlq_queue)
+    ex_dead: aio_pika.RobustExchange = await broker.declare_exchange(dlx_exchange)
+    await q_dead.bind(ex_dead, routing_key="payments.dead")

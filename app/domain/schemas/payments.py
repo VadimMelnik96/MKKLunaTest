@@ -40,4 +40,3 @@ class PaymentPayload(ArbitraryModel):
     currency: CurrencyEnum
     description: str | None = None
     webhook_url: str
-    retry_count: int = 0

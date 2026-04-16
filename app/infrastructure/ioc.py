@@ -1,18 +1,22 @@
-from dishka import Provider, from_context, Scope, provide
+from dishka import Provider, Scope, from_context, provide
 
 from app.common.database import Database
 from app.infrastructure.adapters.gateway_adapter import PaymentGatewayAdapter
-from app.infrastructure.adapters.interfaces import IWebhookAdapter, IPaymentGatewayAdapter
+from app.infrastructure.adapters.interfaces import IPaymentGatewayAdapter, IWebhookAdapter
 from app.infrastructure.adapters.webhook_adapter import WebhookAdapter
 from app.infrastructure.unit_of_work.interfaces import IUnitOfWork
 from app.infrastructure.unit_of_work.uow import UnitOfWork
 from app.services.flood_payment_test import FloodPaymentTestService
-from app.services.interfaces import IPaymentService, IOutboxService, IProcessingPaymentService, \
-    IFloodPaymentsTestService
+from app.services.interfaces import (
+    IFloodPaymentsTestService,
+    IOutboxService,
+    IPaymentService,
+    IProcessingPaymentService,
+)
 from app.services.outbox import OutBoxService
 from app.services.payments import PaymentService
 from app.services.processing_service import ProcessingPaymentService
-from app.settings.settings import Settings, PostgresSettings, AppSettings
+from app.settings.settings import AppSettings, PostgresSettings, Settings
 
 
 class ApplicationProvider(Provider):

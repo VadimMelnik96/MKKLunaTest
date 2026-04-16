@@ -7,12 +7,12 @@ from dishka import make_async_container
 from app.infrastructure.ioc import ApplicationProvider
 from app.infrastructure.providers.rabbit_broker import RabbitProvider
 from app.services.interfaces import IOutboxService
-from app.settings.settings import Settings, settings, PostgresSettings, AppSettings, RabbitSettings
+from app.settings.settings import AppSettings, PostgresSettings, RabbitSettings, Settings, settings
 
 logger = structlog.get_logger()
 
 
-async def main():
+async def main() -> None:
     """Запуск планировщика задач"""
     container = make_async_container(
         ApplicationProvider(),
@@ -38,7 +38,7 @@ async def main():
     scheduler.add_job(
         service.publish_pending,
         "interval",
-        seconds=settings.outbox.max_attempts
+        seconds=settings.outbox.frequency
     )
     scheduler.start()
     logger.info("Планировщик запущен")

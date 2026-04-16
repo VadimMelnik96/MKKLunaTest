@@ -1,4 +1,4 @@
-from app.common.filters.filters import BaseFilter, UUIDFilter, StringFilter
+from app.common.filters.filters import BaseFilter, StringFilter, UUIDFilter
 
 
 class PaymentFilter(BaseFilter):

@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypeVar
-
-
+from typing import TypeVar
 
 from app.common.filters.filters import BaseFilter
 
@@ -23,13 +21,13 @@ class IRepository(ABC):
 
     @abstractmethod
     async def get_list(
-        self, filters: Optional[Filters] = None, order_filters: Optional[OrderFilters] = None
+        self, filters: Filters | None = None, order_filters: OrderFilters | None = None
     ) -> list[Entity]:
         """Интерфейс получения списка объектов"""
         pass
 
     @abstractmethod
-    async def get_one(self, filters: Optional[Filters]) -> Entity:
+    async def get_one(self, filters: Filters | None) -> Entity:
         """Интерфейс получения одного объекта"""
         pass
 

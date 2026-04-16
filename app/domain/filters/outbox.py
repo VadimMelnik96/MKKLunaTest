@@ -1,4 +1,4 @@
-from app.common.filters.filters import BaseFilter, UUIDFilter, StringFilter, BooleanFilter, NumberFilter, DateFilter
+from app.common.filters.filters import BaseFilter, DateFilter, NumberFilter, StringFilter, UUIDFilter
 
 
 class OutboxFilter(BaseFilter):

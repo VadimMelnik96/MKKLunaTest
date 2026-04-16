@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Numeric, String, JSON
+from sqlalchemy import JSON, Index, Numeric, String
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.domain.enums import PaymentStatus, CurrencyEnum
+from app.domain.enums import CurrencyEnum, PaymentStatus
 from app.infrastructure.models.base import Base
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
 
 
 class Payment(Base):
@@ -20,5 +20,15 @@ class Payment(Base):
     payment_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     currency: Mapped[CurrencyEnum] = mapped_column(String, nullable=True)
     webhook_url: Mapped[str] = mapped_column(String(500), nullable=False)
-    idempotency_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
     processed_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("ix_payments_status", "status"),
+        Index("ix_payments_processed_at", "processed_at"),
+        Index(
+            "ix_payments_status_processed",
+            "status",
+            "processed_at",
+        ),
+    )

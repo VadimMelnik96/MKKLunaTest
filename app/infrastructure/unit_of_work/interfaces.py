@@ -1,7 +1,7 @@
 import abc
 
 from app.common.uow.interfaces import BaseAbstractUnitOfWork
-from app.domain.repositories.interfaces import IPaymentsRepo, IOutboxRepo
+from app.domain.repositories.interfaces import IOutboxRepo, IPaymentsRepo
 
 
 class IUnitOfWork(BaseAbstractUnitOfWork, abc.ABC):

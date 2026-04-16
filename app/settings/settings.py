@@ -1,9 +1,10 @@
 import os
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Self, Sequence
+from typing import Self
 
 from dotenv import load_dotenv
-from pydantic import model_validator, PostgresDsn, computed_field
+from pydantic import PostgresDsn, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -78,34 +79,26 @@ class ScalingSettings(EnvBaseSettings):
 
     @computed_field
     def effective_backend_workers(self) -> int:
+        """Вычисление бэкенд воркеров"""
         return self.backend_workers or (os.cpu_count() or 1)
 
     @computed_field
     def db_pool_size(self) -> int:
+        """Вычислегие пула подключений"""
         per_worker = self.max_db_connections // self.effective_backend_workers
         return max(1, int(per_worker * 0.8))
 
     @computed_field
     def db_max_overflow(self) -> int:
+        """Вычисление переполнения"""
         per_worker = self.max_db_connections // self.effective_backend_workers
         return max(0, per_worker - self.db_pool_size)
 
     model_config = SettingsConfigDict(env_prefix="scale_")
 
 
-class WebhookSettings(EnvBaseSettings):
-    """Настройки для адаптера webhook"""
-    max_attempts: int = 3
-    base_delay: float = 1.0
-    timeout: float = 10.0
-
-    model_config = SettingsConfigDict(env_prefix="webhook_")
-
-
 class OutboxSettings(EnvBaseSettings):
     """Настройки outbox"""
-
-    max_attempts: int = 3
     exchange: str = 'payments'
     frequency: int = 1
 
@@ -122,6 +115,7 @@ class RabbitSettings(EnvBaseSettings):
 
     @property
     def url(self) -> str:
+        """URL для подключения брокера"""
         return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
 
     model_config = SettingsConfigDict(env_prefix="rabbit_")
@@ -132,14 +126,13 @@ class Settings(EnvBaseSettings):
     app: AppSettings = AppSettings()
     database: PostgresSettings = PostgresSettings()
     rabbit: RabbitSettings = RabbitSettings()
-    webhook: WebhookSettings = WebhookSettings()
     scaling: ScalingSettings = ScalingSettings()
     outbox: OutboxSettings = OutboxSettings()
 
 
 @lru_cache
 def get_settings() -> Settings:
-    """Предотвращает повторную инициализацию """
+    """Предотвращает повторную инициализацию"""
     return Settings()
 
 

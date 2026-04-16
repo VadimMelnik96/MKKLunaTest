@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from typing import Any
+from warnings import deprecated
 
 from pydantic import BaseModel
 from sqlalchemy import (
@@ -14,16 +15,16 @@ from sqlalchemy import (
     asc,
     delete,
     desc,
+    func,
     insert,
     or_,
     select,
-    update, func,
+    update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, InstrumentedAttribute
-from typing_extensions import deprecated
 
 from app.common.exceptions.exceptions import ConflictError, NotFoundError
 from app.common.filters.filters import (
@@ -162,7 +163,7 @@ class SQLAlchemyRepository(IRepository):
 
         current_condition = getattr(filters, "condition", parent_condition)
 
-        for field_name, field_filter in filters.to_dict().items():
+        for field_name, field_filter in filters.model_dump(exclude_none=False).items():
             if field_name in ("condition", "nested_filters", "filters"):
                 continue
 
@@ -216,6 +217,13 @@ class SQLAlchemyRepository(IRepository):
         """Применяет фильтр к конкретному полю."""
         conditions = []
         for operator, value in field_filter.items():
+
+            if value is None:
+                if operator == "eq":
+                    conditions.append(field.is_(None))
+                elif operator == "ne":
+                    conditions.append(field.is_not(None))
+                continue
             if operator == "eq":
                 conditions.append(field == value)
             elif operator == "like":
@@ -339,8 +347,6 @@ class SQLAlchemyRepository(IRepository):
             filters: BaseFilter | None = None,
     ) -> tuple[list[BaseModel], int]:
         """Получение списка объектов и их общего количества"""
-
-
         count_stmt = select(func.count()).select_from(self.model)
 
         if filters:

@@ -10,7 +10,8 @@ class RabbitProvider(Provider):
     """Провайдер RabbitMQ брокера"""
 
     @provide(scope=Scope.APP)
-    async def get_broker(self, settings: RabbitSettings) -> AsyncGenerator[RabbitBroker, None]:
+    async def get_broker(self, settings: RabbitSettings) -> AsyncGenerator[RabbitBroker]:
+        """Получение брокера RabbitMQ"""
         broker = RabbitBroker(settings.url)
         await broker.connect()
         try:

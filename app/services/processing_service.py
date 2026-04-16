@@ -3,13 +3,12 @@ import datetime
 import structlog
 from faststream.rabbit import RabbitBroker
 
-
 from app.common.filters.filters import UUIDFilter
 from app.domain.enums import PaymentStatus
-from app.domain.exceptions import GatewayNetworkError, WebhookError, PaymentHandleError
+from app.domain.exceptions import GatewayNetworkError, PaymentHandleError, WebhookError
 from app.domain.filters.payments import PaymentFilter
 from app.domain.schemas.gateway_results import GatewayResult
-from app.domain.schemas.payments import PaymentPayload, UpdatePaymentDTO, PaymentDTO
+from app.domain.schemas.payments import PaymentDTO, PaymentPayload, UpdatePaymentDTO
 from app.infrastructure.adapters.interfaces import IPaymentGatewayAdapter, IWebhookAdapter
 from app.infrastructure.unit_of_work.interfaces import IUnitOfWork
 from app.services.interfaces import IProcessingPaymentService
@@ -19,14 +18,20 @@ logger = structlog.get_logger(__name__)
 class ProcessingPaymentService(IProcessingPaymentService):
     """Сервис обработки платежей"""
 
-    def __init__(self, broker: RabbitBroker, uow: IUnitOfWork, gateway_adapter: IPaymentGatewayAdapter, webhook_adapter: IWebhookAdapter):
+    def __init__(
+            self,
+            broker: RabbitBroker,
+            uow: IUnitOfWork,
+            gateway_adapter: IPaymentGatewayAdapter,
+            webhook_adapter: IWebhookAdapter
+    ):
         self.broker = broker
         self.uow = uow
         self.gateway_adapter = gateway_adapter
         self.webhook_adapter = webhook_adapter
 
-    async def _process_payment(self, event: PaymentPayload):
-        """Процесс обработки шлюзо"""
+    async def _process_payment(self, event: PaymentPayload) -> PaymentDTO:
+        """Процесс обработки шлюза"""
         async with self.uow:
             logger.info("Processing payment", payment_id=str(event.payment_id))
 
@@ -49,6 +54,7 @@ class ProcessingPaymentService(IProcessingPaymentService):
                 update_dto=UpdatePaymentDTO(status=new_status, processed_at=datetime.datetime.now(datetime.UTC)),
                 filters=PaymentFilter(id=UUIDFilter(eq=event.payment_id))
             )
+            await self.uow.commit()
             return payment
 
 

@@ -12,14 +12,14 @@ services:
       dockerfile: Dockerfile
     command: echo "Image built"
     networks:
-       - mkkluna_net
+      - mkkluna_net
 
   app:
     image: mkkluna
     pull_policy: never
     container_name: mkkluna_api
     env_file: .env
-    command: sh -c "alembic upgrade head && uvicorn app.main:app"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     depends_on:
@@ -36,9 +36,10 @@ services:
     env_file: .env
     command: python -m app.outbox_scheduler
     depends_on:
-      - builder
-      - db
-      - rabbit
+      db:
+        condition: service_healthy
+      rabbit:
+        condition: service_healthy
     networks:
       - mkkluna_net
 
@@ -83,8 +84,8 @@ services:
     image: rabbitmq:4.0-management
     container_name: mkkluna_rabbit
     ports:
-      - "5672:5672"   # Порт для AMQP
-      - "15672:15672" # Порт для Management UI (логин/пароль: guest/guest)
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -97,3 +98,5 @@ services:
       retries: 5
 
 
+volumes:
+  postgres_dev_data:

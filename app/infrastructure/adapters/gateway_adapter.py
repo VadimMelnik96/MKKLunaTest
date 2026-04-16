@@ -1,13 +1,13 @@
 import asyncio
 import random
-from uuid import UUID
 from decimal import Decimal
+from uuid import UUID
 
 import structlog
 
+from app.domain.exceptions import GatewayNetworkError
 from app.domain.schemas.gateway_results import GatewayResult
 from app.infrastructure.adapters.interfaces import IPaymentGatewayAdapter
-from app.domain.exceptions import GatewayNetworkError
 
 logger = structlog.get_logger(__name__)
 
@@ -16,6 +16,7 @@ class PaymentGatewayAdapter(IPaymentGatewayAdapter):
     """Имитация платежного шлюза"""
 
     async def process(self, payment_id: UUID, amount: Decimal) -> GatewayResult:
+        """Имитация отправки на шлюз"""
         logger.info(
             f"Посылаем платеж {payment_id} стоимостью {amount}"
         )

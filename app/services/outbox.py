@@ -4,7 +4,7 @@ import structlog
 from faststream.rabbit import RabbitBroker
 
 from app.common.database import Database
-from app.common.filters.filters import BooleanFilter, NumberFilter, Condition, DateFilter, UUIDFilter
+from app.common.filters.filters import DateFilter, UUIDFilter
 from app.domain.filters.outbox import OutboxFilter
 from app.domain.schemas.outbox import UpdateOutboxDTO
 from app.infrastructure.unit_of_work.uow import UnitOfWork
@@ -26,15 +26,13 @@ class OutBoxService(IOutboxService):
         """Инициализация единицы работы для другого Scope"""
         return UnitOfWork(db=self.db)
 
-    async def publish_pending(self):
+    async def publish_pending(self) -> None:
         """Публикация outbox"""
         uow = self._make_uow()
         logger.info("Запуск публикации outbox messages")
         async with uow:
             outbox_messages = await uow.outbox.get_list(
                 filters=OutboxFilter(
-                    condition=Condition.AND,
-                    attempts=NumberFilter(lt=self.settings.outbox.max_attempts),
                     published_at=DateFilter(eq=None)
                 )
             )
@@ -51,11 +49,12 @@ class OutBoxService(IOutboxService):
                         )
                         await uow.outbox.update(
                             UpdateOutboxDTO(
-                                published_at=datetime.datetime.now(tz=datetime.timezone.utc),
+                                published_at=datetime.datetime.now(tz=datetime.UTC),
                                 attempts=message.attempts + 1,
                             ),
                             filters=OutboxFilter(id=UUIDFilter(eq=message.id))
                         )
+                        await uow.commit()
                     except Exception as e:
                         logger.warning(
                             "Ошибка публикации outbox-сообщения",
@@ -70,5 +69,5 @@ class OutBoxService(IOutboxService):
                                 ),
                                 filters=OutboxFilter(id=UUIDFilter(eq=message.id))
                             )
-            await uow.commit()
+                        await uow.commit()
         logger.info("Отправка outbox messages завершена")

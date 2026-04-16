@@ -8,7 +8,7 @@ from app.common.filters.filters import StringFilter, UUIDFilter
 from app.domain.enums import PaymentStatus
 from app.domain.filters.payments import PaymentFilter
 from app.domain.schemas.outbox import CreateOutboxDTO
-from app.domain.schemas.payments import PaymentDTO, CreatePaymentDTO
+from app.domain.schemas.payments import CreatePaymentDTO, PaymentDTO
 from app.infrastructure.unit_of_work.interfaces import IUnitOfWork
 from app.services.interfaces import IPaymentService
 
@@ -25,7 +25,9 @@ class PaymentService(IPaymentService):
         """Создание платежа и outbox_message"""
         async with self.uow:
             try:
-                existing = await self.uow.payments.get_one(filters=PaymentFilter(idempotency_key=StringFilter(eq=idempotency_key)))
+                existing = await self.uow.payments.get_one(
+                    filters=PaymentFilter(idempotency_key=StringFilter(eq=idempotency_key))
+                )
                 logger.info(f"Payment with key {idempotency_key}  exists: {existing.id}")
                 return existing
             except NotFoundError:

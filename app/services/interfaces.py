@@ -12,7 +12,7 @@ class IPaymentService(abc.ABC):
         """Создание платежа"""
 
     @abc.abstractmethod
-    async def get_payment(self, payment_id: uuid.UUID):
+    async def get_payment(self, payment_id: uuid.UUID) -> PaymentDTO:
         """Получение платежа"""
 
 
@@ -20,7 +20,7 @@ class IOutboxService(abc.ABC):
     """Интерфейс сервиса Outbox"""
 
     @abc.abstractmethod
-    async def publish_pending(self):
+    async def publish_pending(self) -> None:
         """Публикация сообщений о платежах"""
 
 
@@ -33,8 +33,8 @@ class IProcessingPaymentService(abc.ABC):
 
 
 class IFloodPaymentsTestService(abc.ABC):
-    """Сервис для наводнения платежами """
+    """Сервис для наводнения платежами"""
 
     @abc.abstractmethod
     async def flood(self, amount: int) -> None:
-        """Генерирует несколько фейковых платежей и отсылает их """
+        """Генерирует несколько фейковых платежей и отсылает их"""

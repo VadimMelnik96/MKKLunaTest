@@ -31,7 +31,14 @@ class FloodPaymentTestService(IFloodPaymentsTestService):
                         webhook_url=fake.url(),
                     )
 
-                resp = await client.post(url="http://localhost:8000/payments", json=body.model_dump(), headers={"X-Api-Key": settings.app.static_api_key, "Idempotency-Key": idempotency_key})
+                await client.post(
+                    url="http://localhost:8000/payments",
+                    json=body.model_dump(),
+                    headers={
+                        "X-Api-Key": settings.app.static_api_key,
+                        "Idempotency-Key": idempotency_key
+                    }
+                )
 
 
 

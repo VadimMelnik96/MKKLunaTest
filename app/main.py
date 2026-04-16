@@ -3,18 +3,19 @@ from dishka.integrations.fastapi import FastapiProvider, setup_dishka
 from fastapi import FastAPI
 
 from app.api.middlewares.authentication import APIKeyMiddleware
+from app.api.v1.routers.payments import router as payments_router
+from app.api.v1.routers.test import router as tests_router
 from app.domain.exception_handlers import exception_config
 from app.infrastructure.ioc import ApplicationProvider
 from app.infrastructure.providers.rabbit_broker import RabbitProvider
-from app.settings.settings import PostgresSettings, settings, AppSettings, Settings, RabbitSettings
-from app.api.v1.routers.payments import router as payments_router
-from app.api.v1.routers.test import router as tests_router
+from app.settings.settings import AppSettings, PostgresSettings, RabbitSettings, Settings, settings
 
 
 def create_app() -> FastAPI:
     """Инициализация приложения"""
-
     application = FastAPI(
+        title=settings.app.title,
+        version=settings.app.version,
     )
     container = make_async_container(
         ApplicationProvider(),
